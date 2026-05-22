@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/user_prefs_provider.dart';
 import '../models/user_prefs.dart';
+import '../widgets/glass.dart';
 import 'manage_habits_screen.dart';
 import 'backup_screen.dart';
 
@@ -14,27 +16,45 @@ class SettingsScreen extends ConsumerWidget {
     final prefsNotifier = ref.read(userPrefsProvider.notifier);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: const Color(0xFF0A0E21),
-        elevation: 0,
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: AppBar(
+              backgroundColor: AppTokens.bgDeep.withOpacity(0.4),
+              title: const Text(
+                'Settings',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              centerTitle: false,
+            ),
+          ),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+          16,
+          GlassTabBarSpacer.height,
+        ),
         children: [
           // Daily Goals Section
           const Text(
             'Daily Goals',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1E33),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[800]!, width: 2),
-            ),
+          GlassCard(
+            padding: const EdgeInsets.all(8),
+            radius: AppTokens.rMd,
             child: Column(
               children: [
                 ListTile(
@@ -83,16 +103,12 @@ class SettingsScreen extends ConsumerWidget {
           // Streak Mode Section
           const Text(
             'Streak Requirements',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1E33),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[800]!, width: 2),
-            ),
+          GlassCard(
+            padding: const EdgeInsets.all(8),
+            radius: AppTokens.rMd,
             child: Column(
               children: [
                 SwitchListTile(
@@ -113,16 +129,12 @@ class SettingsScreen extends ConsumerWidget {
           // App Preferences Section
           const Text(
             'App Preferences',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1E33),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[800]!, width: 2),
-            ),
+          GlassCard(
+            padding: const EdgeInsets.all(8),
+            radius: AppTokens.rMd,
             child: Column(
               children: [
                 SwitchListTile(
@@ -157,15 +169,12 @@ class SettingsScreen extends ConsumerWidget {
           // Custom Habits Section
           const Text(
             'Custom Habits',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1E33),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[800]!, width: 2),
-            ),
+          GlassCard(
+            padding: EdgeInsets.zero,
+            radius: AppTokens.rMd,
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
               leading: Container(
@@ -204,15 +213,12 @@ class SettingsScreen extends ConsumerWidget {
           // Backup & Restore Section
           const Text(
             'Backup & Restore',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white60, letterSpacing: 1.2),
           ),
           const SizedBox(height: 12),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1E33),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[800]!, width: 2),
-            ),
+          GlassCard(
+            padding: EdgeInsets.zero,
+            radius: AppTokens.rMd,
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
               leading: Container(
@@ -249,18 +255,19 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // About Section
-          Container(
+          GlassCard(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1D1E33),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[800]!, width: 2),
-            ),
+            radius: AppTokens.rMd,
             child: const Column(
               children: [
                 Text(
                   'Loopify',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.orange),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: AppTokens.accent,
+                    letterSpacing: -0.5,
+                  ),
                 ),
                 SizedBox(height: 8),
                 Text(
