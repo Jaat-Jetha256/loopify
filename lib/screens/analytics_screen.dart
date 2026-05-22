@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_stats.dart';
@@ -6,6 +7,7 @@ import '../services/analytics_service.dart';
 import '../services/hive_service.dart';
 import '../widgets/habit_heatmap.dart';
 import '../widgets/weekly_report_modal.dart';
+import '../widgets/glass.dart';
 
 class AnalyticsScreen extends ConsumerStatefulWidget {
   const AnalyticsScreen({Key? key}) : super(key: key);
@@ -22,20 +24,35 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     final stats = ref.watch(userStatsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0E21),
-      appBar: AppBar(
-        title: const Text(
-          'Analytics',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: AppBar(
+              backgroundColor: AppTokens.bgDeep.withOpacity(0.4),
+              title: const Text(
+                'Analytics',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.3,
+                  fontSize: 18,
+                ),
+              ),
+              centerTitle: true,
+            ),
           ),
         ),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF0A0E21),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+          16,
+          GlassTabBarSpacer.height,
+        ),
         child: Column(
           children: [
             // Performance Overview Card
@@ -136,12 +153,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
       'description': 'Log your wins and milestones',
     });
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D1E33),
-        borderRadius: BorderRadius.circular(16),
-      ),
+      radius: AppTokens.rMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -478,13 +492,11 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Widget _buildStatCard(String label, String value, IconData icon, Color color) {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D1E33),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
+      radius: AppTokens.rMd,
+      borderColor: color.withOpacity(0.30),
+      tint: color.withOpacity(0.06),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -513,12 +525,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Widget _buildStreakBreaksSection(UserStats stats) {
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D1E33),
-        borderRadius: BorderRadius.circular(16),
-      ),
+      radius: AppTokens.rMd,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -584,12 +593,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     return FutureBuilder<List<WeekdayStats>>(
       future: AnalyticsService.getBestWorstDays(),
       builder: (context, snapshot) {
-        return Container(
+        return GlassCard(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1D1E33),
-            borderRadius: BorderRadius.circular(16),
-          ),
+          radius: AppTokens.rMd,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -700,12 +706,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     return FutureBuilder<List<HabitPerformance>>(
       future: AnalyticsService.getBestWorstHabits(),
       builder: (context, snapshot) {
-        return Container(
+        return GlassCard(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1D1E33),
-            borderRadius: BorderRadius.circular(16),
-          ),
+          radius: AppTokens.rMd,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -816,12 +819,9 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
     return FutureBuilder<List<HabitCorrelation>>(
       future: AnalyticsService.getHabitCorrelations(),
       builder: (context, snapshot) {
-        return Container(
+        return GlassCard(
           padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1D1E33),
-            borderRadius: BorderRadius.circular(16),
-          ),
+          radius: AppTokens.rMd,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -933,46 +933,17 @@ class _AnalyticsScreenState extends ConsumerState<AnalyticsScreen> {
   }
 
   Widget _buildTimeRangeSelector() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D1E33),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          _buildTimeRangeButton('7 Days', '7days'),
-          _buildTimeRangeButton('30 Days', '30days'),
-          _buildTimeRangeButton('All Time', 'all'),
-        ],
-      ),
+    return GlassSegmented<String>(
+      selected: _selectedTimeRange,
+      onChanged: (v) => setState(() => _selectedTimeRange = v),
+      items: const [
+        (value: '7days', label: '7 Days'),
+        (value: '30days', label: '30 Days'),
+        (value: 'all', label: 'All Time'),
+      ],
     );
   }
 
-  Widget _buildTimeRangeButton(String label, String value) {
-    final isSelected = _selectedTimeRange == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedTimeRange = value),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.orange : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? Colors.white : Colors.white70,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildStreakComparison() {
     return FutureBuilder<Map<String, dynamic>>(
