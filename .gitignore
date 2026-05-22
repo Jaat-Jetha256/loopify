@@ -49,3 +49,6 @@ app.*.map.json
 .vscode/
 *.iml
 CLAUDE.md
+
+# Xcode backups
+*.pbxproj.bak
