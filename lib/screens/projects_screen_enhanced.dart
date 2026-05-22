@@ -1,7 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/project.dart';
 import '../providers/project_provider.dart';
+import '../widgets/glass.dart';
 import 'project_detail_screen.dart';
 import 'dart:math' as math;
 
@@ -332,26 +334,47 @@ class _ProjectsScreenEnhancedState extends ConsumerState<ProjectsScreenEnhanced>
     final archivedProjects = projects.where((p) => !p.active).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0E21),
-      extendBody: false,
-      appBar: AppBar(
-        title: const Text('Projects', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-        backgroundColor: const Color(0xFF0A0E21),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: Icon(_selectedView == 'grid' ? Icons.view_list : Icons.grid_view),
-            onPressed: () => setState(() => _selectedView = _selectedView == 'grid' ? 'list' : 'grid'),
-            tooltip: 'Toggle View',
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: AppBar(
+              backgroundColor: AppTokens.bgDeep.withOpacity(0.4),
+              title: const Text(
+                'Projects',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  letterSpacing: -0.3,
+                ),
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GlassIconButton(
+                    icon: _selectedView == 'grid' ? Icons.view_list : Icons.grid_view,
+                    onTap: () => setState(() => _selectedView = _selectedView == 'grid' ? 'list' : 'grid'),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
       body: activeProjects.isEmpty
           ? _buildEmptyState()
           : CustomScrollView(
               slivers: [
                 SliverPadding(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+                    16,
+                    16,
+                  ),
                   sliver: SliverToBoxAdapter(
                     child: _buildStatsOverview(activeProjects),
                   ),
@@ -377,15 +400,13 @@ class _ProjectsScreenEnhancedState extends ConsumerState<ProjectsScreenEnhanced>
                     sliver: _buildArchivedList(archivedProjects),
                   ),
                 ],
-                const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 140)),
               ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddProjectDialog,
-        backgroundColor: Colors.orange,
-        icon: const Icon(Icons.add, size: 28),
-        label: const Text('New Project', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        elevation: 8,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 90),
+        child: _GlassFab(onTap: _showAddProjectDialog),
       ),
     );
   }
@@ -439,21 +460,21 @@ class _ProjectsScreenEnhancedState extends ConsumerState<ProjectsScreenEnhanced>
       totalHours += p.hoursSpent;
     }
 
-    return Container(
+    return GlassCard(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1D1E33), Color(0xFF0A0E21)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+      radius: AppTokens.rMd,
+      borderColor: AppTokens.accent.withOpacity(0.30),
+      shadows: [
+        BoxShadow(
+          color: AppTokens.accent.withOpacity(0.12),
+          blurRadius: 22,
+          spreadRadius: -4,
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
-      ),
+      ],
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildOverviewStat(activeProjects.length.toString(), 'Active', Icons.folder_open, Colors.orange),
+          _buildOverviewStat(activeProjects.length.toString(), 'Active', Icons.folder_open, AppTokens.accent),
           Container(width: 1, height: 40, color: Colors.white24),
           _buildOverviewStat('$completedMilestones/$totalMilestones', 'Milestones', Icons.flag, Colors.green),
           Container(width: 1, height: 40, color: Colors.white24),
@@ -814,6 +835,67 @@ class _ProjectsScreenEnhancedState extends ConsumerState<ProjectsScreenEnhanced>
           );
         },
         childCount: archivedProjects.length,
+      ),
+    );
+  }
+}
+
+class _GlassFab extends StatelessWidget {
+  final VoidCallback onTap;
+  const _GlassFab({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(28),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: const LinearGradient(
+                  colors: [AppTokens.accent, AppTokens.accentDeep],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.20),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTokens.accent.withOpacity(0.55),
+                    blurRadius: 22,
+                    spreadRadius: -2,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                  SizedBox(width: 8),
+                  Text(
+                    'New Project',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
