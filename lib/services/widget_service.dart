@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'dart:math' as math;
 import '../constants/habits.dart';
@@ -5,10 +7,16 @@ import 'hive_service.dart';
 
 class WidgetService {
   static const String _widgetName = 'LoopifyWidget';
+  static const MethodChannel _iosBridge = MethodChannel('loopify/widget');
 
   /// Update the home screen widget with current progress
   static Future<void> updateWidget() async {
     try {
+      // Ensure app group is set every time — cheap and idempotent.
+      // Protects against cases where initWidget() ran in a different isolate
+      // or before the iOS plugin's static groupId was populated.
+      await HomeWidget.setAppGroupId('group.com.loopify.loopify');
+
       final streakState = HiveService.getStreakState();
       final streak = streakState.currentStreak;
 
@@ -39,11 +47,31 @@ class WidgetService {
 
       print('📱 Widget Image: $imageName, Quip: $quip');
 
-      // Save data to widget
+      final lastUpdate = DateTime.now().toIso8601String();
+
+      // Save data to widget (UserDefaults app-group on iOS, SharedPreferences on Android)
       await HomeWidget.saveWidgetData<int>('streak', streak);
       await HomeWidget.saveWidgetData<int>('habits_completed', habitsCompleted);
       await HomeWidget.saveWidgetData<String>('quip', quip);
       await HomeWidget.saveWidgetData<String>('image', imageName);
+      await HomeWidget.saveWidgetData<String>('last_update', lastUpdate);
+
+      // iOS: also mirror data into the keychain. iLoader strips app-group
+      // entitlements on free certs, so UserDefaults sharing fails; keychain
+      // sharing via the app-id-prefix group survives the re-sign.
+      if (Platform.isIOS) {
+        try {
+          await _iosBridge.invokeMethod('sync', {
+            'streak': streak,
+            'habits_completed': habitsCompleted,
+            'quip': quip,
+            'image': imageName,
+            'last_update': lastUpdate,
+          });
+        } catch (e) {
+          print('iOS keychain bridge error: $e');
+        }
+      }
 
       print('📱 Data saved to HomeWidget');
 
