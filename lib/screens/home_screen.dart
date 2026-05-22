@@ -1,6 +1,9 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:confetti/confetti.dart';
+import 'package:intl/intl.dart';
 import 'dart:math' as math;
 import '../constants/habits.dart';
 import '../models/day_log.dart';
@@ -22,6 +25,7 @@ import '../widgets/cold_streak_banner.dart';
 import '../widgets/streak_obituary_modal.dart';
 import '../widgets/achievement_modal.dart';
 import '../widgets/achievement_note_dialog.dart';
+import '../widgets/glass.dart';
 import '../models/habit_log.dart';
 import '../services/streak_service.dart';
 import '../services/widget_service.dart';
@@ -566,12 +570,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
     _lastHabitCount = dayLog.totalHabitsLogged;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           SingleChildScrollView(
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
             child: Column(
               children: [
-                const SizedBox(height: 20),
+                const _HomeHeader(),
                 // Midnight Countdown (only shows after 10 PM)
                 const MidnightCountdown(),
                 // Cold Streak Banner (shows when failing)
@@ -608,117 +614,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                   },
                 ),
                 const SizedBox(height: 16),
-                // Achievement Note Button
-                GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => const AchievementNoteDialog(),
-                    );
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFFFF6B35),
-                          Color(0xFFFF8C35),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                // Action row — Achievement + Challenge
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: _GlassActionTile(
+                          emoji: '🏆',
+                          label: 'Achievement',
+                          accent: AppTokens.accent,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            showDialog(
+                              context: context,
+                              builder: (context) => const AchievementNoteDialog(),
+                            );
+                          },
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF6B35).withValues(alpha: 0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _GlassActionTile(
+                          icon: Icons.timer_outlined,
+                          label: 'Challenge',
+                          accent: const Color(0xFFAB47BC),
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            SetChallengeDialog.show(context);
+                          },
                         ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '🏆',
-                          style: TextStyle(fontSize: 24),
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'LOG AN ACHIEVEMENT',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 // Active Challenges Banner
                 const ActiveChallengesBanner(),
-                // Set Challenge Button
-                GestureDetector(
-                  onTap: () => SetChallengeDialog.show(context),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF7B1FA2),
-                          Color(0xFFAB47BC),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF7B1FA2).withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.timer,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                        SizedBox(width: 12),
-                        Text(
-                          'SET A CHALLENGE',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(
-                          Icons.arrow_forward_rounded,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 16),
                 // Streak Firebar
                 Firebar(
@@ -865,14 +797,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                     },
                   );
                 }),
-                // Add Custom Habit Button - Modern Design
+                // Add Custom Habit Button - Glass design
                 GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => const AddCustomHabitDialog(),
-                    );
-                  },
                   onLongPress: () {
                     Navigator.push(
                       context,
@@ -881,103 +807,71 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with WidgetsBindingObse
                       ),
                     );
                   },
-                  child: Container(
+                  child: AccentGlassCard(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          const Color(0xFF2A2D4A).withOpacity(0.5),
-                          const Color(0xFF1D1E33).withOpacity(0.8),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      border: GradientBoxBorder(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFFFF6B35).withOpacity(0.5),
-                            const Color(0xFFFF6B35).withOpacity(0.2),
-                            const Color(0xFFFF6B35).withOpacity(0.4),
-                          ],
-                          stops: const [0.0, 0.5, 1.0],
-                        ),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFF6B35).withOpacity(0.15),
-                          blurRadius: 20,
-                          spreadRadius: 0,
-                        ),
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
+                    padding: const EdgeInsets.all(16),
+                    radius: AppTokens.rLg,
+                    accent: AppTokens.accent,
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => const AddCustomHabitDialog(),
+                      );
+                    },
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFFFF6B35).withOpacity(0.3),
-                                const Color(0xFFFF6B35).withOpacity(0.1),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            color: AppTokens.accent.withOpacity(0.18),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: const Color(0xFFFF6B35).withOpacity(0.4),
-                              width: 1.5,
+                              color: AppTokens.accent.withOpacity(0.45),
+                              width: 1,
                             ),
                           ),
                           child: const Icon(
                             Icons.add_rounded,
-                            color: Color(0xFFFF6B35),
-                            size: 26,
+                            color: AppTokens.accent,
+                            size: 24,
                           ),
                         ),
                         const SizedBox(width: 14),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Add Custom Habit',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.3,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Add Custom Habit',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.2,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Long press to manage habits',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.4),
-                                fontSize: 11,
+                              const SizedBox(height: 2),
+                              Text(
+                                'Long press to manage',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.45),
+                                  fontSize: 11,
+                                  letterSpacing: -0.1,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const Spacer(),
                         Icon(
                           Icons.arrow_forward_ios_rounded,
-                          color: const Color(0xFFFF6B35).withOpacity(0.5),
-                          size: 18,
+                          color: AppTokens.accent.withOpacity(0.6),
+                          size: 14,
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 40),
+                const GlassTabBarSpacer(),
               ],
             ),
           ),
@@ -1019,31 +913,11 @@ class _RecoveryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AccentGlassCard(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1D1E33),
-            const Color(0xFF2A1F4A),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.amber.withOpacity(0.5),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.amber.withOpacity(0.2),
-            blurRadius: 15,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
+      radius: AppTokens.rMd,
+      accent: Colors.amber,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1152,6 +1026,127 @@ class _RecoveryCard extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader();
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 5) return 'Late night';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = DateFormat('EEEE, MMM d').format(DateTime.now());
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _greeting(),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.55),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: -0.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  dateStr,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ClipOval(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+              child: Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withOpacity(0.06),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.12),
+                    width: 1,
+                  ),
+                ),
+                child: const Icon(
+                  Icons.local_fire_department_rounded,
+                  color: AppTokens.accent,
+                  size: 22,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GlassActionTile extends StatelessWidget {
+  final String? emoji;
+  final IconData? icon;
+  final String label;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _GlassActionTile({
+    this.emoji,
+    this.icon,
+    required this.label,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AccentGlassCard(
+      accent: accent,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+      radius: AppTokens.rMd,
+      onTap: onTap,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (emoji != null)
+            Text(emoji!, style: const TextStyle(fontSize: 20))
+          else if (icon != null)
+            Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+              ),
+            ),
           ),
         ],
       ),
