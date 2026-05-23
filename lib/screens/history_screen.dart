@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/day_log.dart';
@@ -8,6 +9,7 @@ import '../constants/habits.dart';
 import 'package:intl/intl.dart';
 import '../widgets/morph_chip.dart';
 import '../widgets/custom_habit_chip.dart';
+import '../widgets/glass.dart';
 import '../providers/user_prefs_provider.dart';
 import '../providers/project_provider.dart';
 import '../providers/custom_habit_provider.dart';
@@ -40,68 +42,71 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0E21),
-      body: CustomScrollView(
-        slivers: [
-          // App Bar
-          SliverAppBar(
-            backgroundColor: const Color(0xFF1D1E33),
-            expandedHeight: 180,
-            pinned: true,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF1D1E33), Color(0xFF0A0E21)],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 40),
-                        Row(
-                          children: [
-                            _StatCard(
-                              icon: Icons.local_fire_department,
-                              value: '${streakState.currentStreak}',
-                              label: 'Current',
-                              color: Colors.orange,
-                            ),
-                            const SizedBox(width: 12),
-                            _StatCard(
-                              icon: Icons.emoji_events,
-                              value: '${streakState.bestStreak}',
-                              label: 'Best',
-                              color: Colors.amber,
-                            ),
-                            const SizedBox(width: 12),
-                            _StatCard(
-                              icon: Icons.calendar_today,
-                              value: '${userStats.totalDaysActive}',
-                              label: 'Active Days',
-                              color: Colors.green,
-                            ),
-                            const SizedBox(width: 12),
-                            _StatCard(
-                              icon: Icons.check_circle,
-                              value: '${userStats.lifetimeHabitsCompleted}',
-                              label: 'Habits',
-                              color: Colors.blue,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+            child: AppBar(
+              backgroundColor: AppTokens.bgDeep.withOpacity(0.4),
+              title: const Text(
+                'History',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 20,
+                  letterSpacing: -0.3,
                 ),
               ),
-              title: const Text('Progress History'),
               centerTitle: false,
+            ),
+          ),
+        ),
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: MediaQuery.of(context).padding.top + kToolbarHeight,
+            ),
+          ),
+
+          // Stat row right under the app bar
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            sliver: SliverToBoxAdapter(
+              child: Row(
+                children: [
+                  _StatCard(
+                    icon: Icons.local_fire_department,
+                    value: '${streakState.currentStreak}',
+                    label: 'Current',
+                    color: AppTokens.accent,
+                  ),
+                  const SizedBox(width: 10),
+                  _StatCard(
+                    icon: Icons.emoji_events,
+                    value: '${streakState.bestStreak}',
+                    label: 'Best',
+                    color: Colors.amber,
+                  ),
+                  const SizedBox(width: 10),
+                  _StatCard(
+                    icon: Icons.calendar_today,
+                    value: '${userStats.totalDaysActive}',
+                    label: 'Active',
+                    color: const Color(0xFF4ECDC4),
+                  ),
+                  const SizedBox(width: 10),
+                  _StatCard(
+                    icon: Icons.check_circle_outline,
+                    value: '${userStats.lifetimeHabitsCompleted}',
+                    label: 'Habits',
+                    color: const Color(0xFF5F9FED),
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -286,34 +291,50 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: 4),
-            Text(
-              value,
-              style: TextStyle(
-                color: color,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTokens.rSm),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withOpacity(0.18),
+                  color.withOpacity(0.06),
+                ],
               ),
+              borderRadius: BorderRadius.circular(AppTokens.rSm),
+              border: Border.all(color: color.withOpacity(0.30), width: 1),
             ),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
-                fontSize: 10,
-              ),
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                Icon(icon, color: color, size: 18),
+                const SizedBox(height: 6),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -340,13 +361,10 @@ class _CalendarSection extends StatelessWidget {
     final daysInMonth = lastDayOfMonth.day;
     final startingWeekday = firstDayOfMonth.weekday % 7; // 0 = Sunday
 
-    return Container(
+    return GlassCard(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1D1E33),
-        borderRadius: BorderRadius.circular(20),
-      ),
+      radius: AppTokens.rLg,
       child: Column(
         children: [
           // Month Navigation
@@ -607,18 +625,12 @@ class _DayLogCard extends ConsumerWidget {
 
     final progressPercent = (dayLog.totalHabitsLogged / 11 * 100).clamp(0, 100).toInt();
 
-    return GestureDetector(
+    return GlassCard(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: EdgeInsets.zero,
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1D1E33),
-          borderRadius: BorderRadius.circular(16),
-          border: isToday
-              ? Border.all(color: const Color(0xFFFF6B35), width: 2)
-              : null,
-        ),
-        child: Column(
+      borderColor: isToday ? AppTokens.accent.withOpacity(0.55) : null,
+      child: Column(
           children: [
             // Header with progress bar
             Container(
@@ -703,7 +715,6 @@ class _DayLogCard extends ConsumerWidget {
               ),
           ],
         ),
-      ),
     );
   }
 
